@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { getActiveServices } from "@/lib/services";
 import BookingWizard from "@/components/booking-wizard/booking-wizard";
 
 export const metadata: Metadata = {
@@ -13,12 +13,7 @@ export default async function MarcarPage({
   searchParams: Promise<{ servico?: string }>;
 }) {
   const { servico } = await searchParams;
-  const supabase = await createClient();
-  const { data: services } = await supabase
-    .from("services")
-    .select("id, nome, descricao, duracao_minutos, preco")
-    .eq("ativo", true)
-    .order("preco", { ascending: true });
+  const services = await getActiveServices();
 
   return (
     <div className="container-site max-w-2xl py-10 sm:py-16">
@@ -27,7 +22,7 @@ export default async function MarcarPage({
         <p className="mt-2 text-charcoal-500">Em 4 passos rápidos, sem sair do site.</p>
       </div>
 
-      {services && services.length > 0 ? (
+      {services.length > 0 ? (
         <BookingWizard services={services} initialServiceId={servico} />
       ) : (
         <p className="text-center text-charcoal-500">

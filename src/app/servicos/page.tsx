@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Clock } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+import { getActiveServices } from "@/lib/services";
 import { formatPreco } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -11,12 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ServicosPage() {
-  const supabase = await createClient();
-  const { data: services } = await supabase
-    .from("services")
-    .select("id, nome, descricao, duracao_minutos, preco")
-    .eq("ativo", true)
-    .order("preco", { ascending: true });
+  const services = await getActiveServices();
 
   return (
     <div className="container-site py-14 sm:py-20">
@@ -28,7 +23,7 @@ export default async function ServicosPage() {
       </div>
 
       <div className="mt-12 grid gap-5 sm:grid-cols-2">
-        {(services ?? []).map((service) => (
+        {services.map((service) => (
           <div key={service.id} className="card flex flex-col p-6 sm:p-7">
             <div className="flex items-start justify-between gap-4">
               <h2 className="font-serif text-xl font-semibold text-charcoal-900">{service.nome}</h2>
@@ -52,7 +47,7 @@ export default async function ServicosPage() {
           </div>
         ))}
 
-        {(!services || services.length === 0) && (
+        {services.length === 0 && (
           <p className="col-span-full text-center text-charcoal-500">
             Ainda não há serviços disponíveis. Volta a tentar em breve.
           </p>
