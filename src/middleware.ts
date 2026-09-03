@@ -5,8 +5,9 @@ export async function middleware(request: NextRequest) {
   return updateSession(request);
 }
 
+// Só o /admin precisa de autenticação — restringir o matcher a essa árvore
+// (em vez de quase todas as rotas) limita o "raio de explosão": um erro
+// aqui dentro deixa de conseguir derrubar o site público inteiro.
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
+  matcher: ["/admin/:path*"],
 };
