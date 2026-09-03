@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured, DEMO_SLOTS } from "@/lib/demo-data";
 
 const SLOT_STEP_MINUTES = 15; // granularidade da grelha de horários mostrados
 const MIN_LEAD_MINUTES = 60; // não permitir marcar para dentro de <1h
@@ -77,9 +78,21 @@ export function computeFreeSlots({
 
 /** Vai buscar tudo o que é preciso ao Supabase e calcula os slots livres para uma data e um serviço. */
 export async function getFreeSlotsForDate(dateStr: string, serviceId: string) {
-  const supabase = await createClient();
   const date = new Date(`${dateStr}T00:00:00`);
   const diaDaSemana = date.getDay();
+
+  // Modo de demonstração (sem Supabase configurado): horários de exemplo,
+  // fechado ao domingo, respeitando o prazo mínimo de 1h se for hoje.
+  if (!isSupabaseConfigured()) {
+    if (diaDaSemana === 0) return [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (date.getTime() !== today.getTime()) return DEMO_SLOTS;
+    const nowMinutes = new Date().getHours() * 60 + new Date().getMinutes();
+    return DEMO_SLOTS.filter((slot) => timeToMinutes(slot) >= nowMinutes + MIN_LEAD_MINUTES);
+  }
+
+  const supabase = await createClient();
 
   const [{ data: service }, { data: rules }, { data: blocked }, { data: bookings }, { data: settings }] =
     await Promise.all([

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Reveal } from "@/components/motion/reveal";
+import { Magnetic } from "@/components/motion/magnetic";
 
 export default function CtaFinal() {
   return (
@@ -20,12 +21,16 @@ export default function CtaFinal() {
           <p className="relative mx-auto mt-3 max-w-md text-rose-50">
             Marca o teu horário online agora — leva menos de um minuto.
           </p>
-          <Link
-            href="/marcar"
-            className="relative mt-7 inline-flex items-center justify-center rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-rose-600 shadow-soft transition-transform duration-300 hover:scale-105 active:scale-95"
-          >
-            Marcar Horário
-          </Link>
+          <div className="relative mt-7 flex justify-center">
+            <Magnetic>
+              <Link
+                href="/marcar"
+                className="inline-flex items-center justify-center rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-rose-600 shadow-soft transition-transform duration-300 hover:scale-105 active:scale-95"
+              >
+                Marcar Horário
+              </Link>
+            </Magnetic>
+          </div>
         </div>
       </Reveal>
     </section>

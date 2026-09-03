@@ -92,7 +92,11 @@ export default function BookingWizard({
 
       <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
         <div className="relative overflow-hidden">
-          <AnimatePresence mode="wait" custom={direction} initial={false}>
+          {/* Sem mode="wait": o passo seguinte monta de imediato em vez de
+              esperar pela animação de saída do anterior terminar — evita
+              que o wizard fique preso caso essa transição nunca complete
+              (ex.: separador em segundo plano a meio da transição). */}
+          <AnimatePresence custom={direction} initial={false}>
             <motion.div
               key={step}
               custom={direction}

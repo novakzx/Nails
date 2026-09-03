@@ -6,12 +6,15 @@ import { getFreeSlotsForDate, timeToMinutes, minutesToTime } from "@/lib/availab
 import { sendAdminNewBookingEmail, sendClientBookingReceivedEmail } from "@/lib/email/resend";
 import { notifyAdmins } from "@/lib/push/send";
 import { buildWhatsappLink } from "@/lib/constants";
+import { isSupabaseConfigured, DEMO_SERVICES } from "@/lib/demo-data";
 
 export interface CreateBookingResult {
   success: boolean;
   error?: string;
   whatsappLink?: string;
   bookingId?: string;
+  /** true quando a marcação foi só simulada (Supabase ainda não configurado). */
+  demo?: boolean;
   resumo?: {
     servicoNome: string;
     data: string;
@@ -33,6 +36,33 @@ export async function createBooking(input: BookingFormValues): Promise<CreateBoo
   }
 
   const { serviceId, data, horaInicio, nomeCliente, telefoneCliente, emailCliente, notas } = parsed.data;
+
+  // Modo de demonstração: sem Supabase configurado, simula uma marcação
+  // bem-sucedida (sem gravar nada) para o site nunca parecer "partido"
+  // numa apresentação. Assim que o Supabase for ligado a sério, este
+  // bloco deixa de ser usado e passa tudo a gravar dados reais.
+  if (!isSupabaseConfigured()) {
+    const service = DEMO_SERVICES.find((s) => s.id === serviceId);
+    if (!service) {
+      return { success: false, error: "O serviço escolhido já não está disponível." };
+    }
+
+    const freeSlots = await getFreeSlotsForDate(data, serviceId);
+    if (!freeSlots.includes(horaInicio)) {
+      return { success: false, error: "Este horário deixou de estar disponível. Por favor escolhe outro." };
+    }
+
+    const horaFim = minutesToTime(timeToMinutes(horaInicio) + service.duracao_minutos);
+    const whatsappMessage = `Olá! Acabei de marcar "${service.nome}" para o dia ${data} às ${horaInicio}. Fico a aguardar confirmação. (${nomeCliente})`;
+
+    return {
+      success: true,
+      demo: true,
+      whatsappLink: buildWhatsappLink(whatsappMessage),
+      bookingId: crypto.randomUUID(),
+      resumo: { servicoNome: service.nome, data, horaInicio, horaFim },
+    };
+  }
 
   const supabase = await createClient();
 
@@ -125,6 +155,10 @@ export async function createBooking(input: BookingFormValues): Promise<CreateBoo
 export async function subscribeClientPush(bookingId: string, subscription: PushSubscriptionJSON) {
   if (!subscription.endpoint || !subscription.keys?.p256dh || !subscription.keys?.auth) {
     return { error: "Subscrição inválida." };
+  }
+
+  if (!isSupabaseConfigured()) {
+    return { success: true }; // modo de demonstração — nada para gravar
   }
 
   const supabase = await createClient();

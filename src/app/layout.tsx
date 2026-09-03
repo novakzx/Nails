@@ -3,6 +3,7 @@ import { Playfair_Display, Inter } from "next/font/google";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
 import CookieConsent from "@/components/layout/cookie-consent";
+import ScrollProgress from "@/components/layout/scroll-progress";
 import InstallPrompt from "@/components/layout/install-prompt";
 import MobileFab from "@/components/layout/mobile-fab";
 import SwRegister from "@/components/sw-register";
@@ -130,6 +131,7 @@ export default function RootLayout({
           Saltar para o conteúdo principal
         </a>
         <SwRegister />
+        <ScrollProgress />
         <Navbar />
         <main id="conteudo-principal" className="flex-1">
           {children}

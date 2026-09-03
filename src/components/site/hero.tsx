@@ -3,7 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { Star, ChevronDown } from "lucide-react";
 import { HERO_IMAGE } from "@/lib/site-images";
+import { Magnetic } from "@/components/motion/magnetic";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -54,31 +56,67 @@ export default function Hero() {
             variants={item}
             className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start"
           >
-            <Link href="/marcar" className="btn-primary w-full sm:w-auto">
-              Marcar Horário
-            </Link>
+            <Magnetic className="w-full sm:w-auto">
+              <Link href="/marcar" className="btn-primary w-full sm:w-auto">
+                Marcar Horário
+              </Link>
+            </Magnetic>
             <Link href="/servicos" className="btn-secondary w-full sm:w-auto">
               Ver Serviços
             </Link>
           </motion.div>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.94, y: 16 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: EASE, delay: 0.15 }}
-          className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden rounded-xl2 shadow-soft_lg lg:max-w-none"
-        >
-          <Image
-            src={HERO_IMAGE.src}
-            alt={HERO_IMAGE.alt}
-            fill
-            priority
-            sizes="(min-width: 1024px) 40vw, 90vw"
-            className="object-cover"
-          />
-        </motion.div>
+        <div className="relative mx-auto w-full max-w-md lg:max-w-none">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.94, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: EASE, delay: 0.15 }}
+            className="relative aspect-[4/5] w-full overflow-hidden rounded-xl2 shadow-soft_lg"
+          >
+            <Image
+              src={HERO_IMAGE.src}
+              alt={HERO_IMAGE.alt}
+              fill
+              priority
+              sizes="(min-width: 1024px) 40vw, 90vw"
+              className="object-cover"
+            />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.6, ease: EASE, delay: 0.7 }}
+            className="absolute -bottom-5 -left-4 flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-soft_lg sm:-left-8"
+          >
+            <div className="flex -space-x-0.5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star key={i} className="h-3.5 w-3.5 fill-rose-500 text-rose-500" aria-hidden="true" />
+              ))}
+            </div>
+            <div className="h-8 w-px bg-sand-300" />
+            <div className="text-left">
+              <p className="font-serif text-sm font-semibold leading-none text-charcoal-900">4.9/5</p>
+              <p className="mt-0.5 text-[11px] text-charcoal-500">clientes satisfeitas</p>
+            </div>
+          </motion.div>
+        </div>
       </div>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.2, duration: 0.6 }}
+        className="relative hidden justify-center pb-6 sm:flex"
+      >
+        <motion.div
+          animate={{ y: [0, 6, 0] }}
+          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <ChevronDown className="h-5 w-5 text-rose-400" aria-hidden="true" />
+        </motion.div>
+      </motion.div>
     </section>
   );
 }

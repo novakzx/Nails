@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { CheckCircle2, MessageCircle } from "lucide-react";
+import { CheckCircle2, MessageCircle, Info } from "lucide-react";
 import { subscribeClientPush, type CreateBookingResult } from "@/app/marcar/actions";
 import { formatDataLonga } from "@/lib/format";
 import PushSubscribeButton from "@/components/push/push-subscribe-button";
 
 export default function Confirmacao({ resultado }: { resultado: CreateBookingResult }) {
-  const { resumo, whatsappLink, bookingId } = resultado;
+  const { resumo, whatsappLink, bookingId, demo } = resultado;
 
   return (
     <div className="mx-auto max-w-lg py-8 text-center animate-fade-in">
@@ -17,6 +17,14 @@ export default function Confirmacao({ resultado }: { resultado: CreateBookingRes
         O teu pedido está <strong>pendente de confirmação</strong>. Enviámos um email com os
         detalhes — vais receber outro assim que a marcação for confirmada.
       </p>
+
+      {demo && (
+        <p className="mx-auto mt-4 flex max-w-sm items-start gap-2 rounded-lg bg-sand-200 p-3 text-left text-xs text-charcoal-500">
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          Versão de demonstração — esta marcação de exemplo não foi gravada. Liga o Supabase para
+          passar a receber marcações reais.
+        </p>
+      )}
 
       {resumo && (
         <dl className="card mt-6 divide-y divide-sand-300 p-5 text-left">

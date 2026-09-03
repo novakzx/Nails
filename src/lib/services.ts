@@ -1,17 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured, DEMO_SERVICES } from "@/lib/demo-data";
 import type { Service } from "@/types/database";
 
 /**
  * Vai buscar os serviços ativos, nunca lançando exceção.
  *
- * Usado por páginas públicas (homepage, /servicos, /marcar) que devem
- * continuar a renderizar mesmo que o Supabase esteja em baixo ou mal
- * configurado (ex.: env vars em falta na Vercel) — nesse caso a
- * construção do próprio cliente Supabase lança uma exceção síncrona
- * *antes* de qualquer query, o que sem este try/catch arrastava a página
- * inteira para o error.tsx.
+ * Sem Supabase configurado, devolve os serviços de demonstração (ver
+ * lib/demo-data.ts) em vez de uma lista vazia — assim o site nunca fica
+ * "vazio" ao ser apresentado antes de a base de dados estar ligada.
  */
 export async function getActiveServices(limit?: number): Promise<Service[]> {
+  if (!isSupabaseConfigured()) {
+    return limit ? DEMO_SERVICES.slice(0, limit) : DEMO_SERVICES;
+  }
+
   try {
     const supabase = await createClient();
     let query = supabase.from("services").select("*").eq("ativo", true).order("preco", { ascending: true });

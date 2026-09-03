@@ -26,6 +26,13 @@ npm run dev
 
 Abre [http://localhost:3000](http://localhost:3000).
 
+> **Modo de demonstração:** sem `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_ANON_KEY`
+> configuradas, o site funciona na mesma com serviços e horários de exemplo (ver
+> [`lib/demo-data.ts`](src/lib/demo-data.ts)) — útil para apresentar o design e o fluxo de
+> marcação antes de ligar a base de dados a sério. Nesse modo, o passo final do wizard simula uma
+> marcação com sucesso mas não grava nada. Assim que definires as variáveis do Supabase (secção
+> 2), tudo passa a usar dados reais automaticamente, sem alterar código.
+
 ## 2. Configurar o Supabase
 
 ### 2.1. Criar o projeto
@@ -120,7 +127,7 @@ src/
     site-images.ts          Fotos de unhas (Hero, Galeria, Sobre)
   types/database.ts        Tipos TypeScript do schema Supabase
 public/sw.js                Service worker (push + PWA)
-scripts/generate-icons.mjs  Gera favicon/ícones PWA a partir de public/favicon.svg
+scripts/generate-icons.mjs  Gera favicon/ícones PWA a partir de src/app/icon.svg
 supabase/migrations/        Migrações SQL
 e2e/                         Testes Playwright
 ```
