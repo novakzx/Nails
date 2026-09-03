@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { CheckCircle2, MessageCircle } from "lucide-react";
-import type { CreateBookingResult } from "@/app/marcar/actions";
+import { subscribeClientPush, type CreateBookingResult } from "@/app/marcar/actions";
 import { formatDataLonga } from "@/lib/format";
+import PushSubscribeButton from "@/components/push/push-subscribe-button";
 
 export default function Confirmacao({ resultado }: { resultado: CreateBookingResult }) {
-  const { resumo, whatsappLink } = resultado;
+  const { resumo, whatsappLink, bookingId } = resultado;
 
   return (
     <div className="mx-auto max-w-lg py-8 text-center animate-fade-in">
@@ -45,6 +46,16 @@ export default function Confirmacao({ resultado }: { resultado: CreateBookingRes
           Voltar ao início
         </Link>
       </div>
+
+      {bookingId && (
+        <div className="mt-6">
+          <PushSubscribeButton
+            label="Avisa-me quando for confirmada"
+            activeLabel="Vais receber uma notificação"
+            onSubscribe={(subscription) => subscribeClientPush(bookingId, subscription)}
+          />
+        </div>
+      )}
     </div>
   );
 }

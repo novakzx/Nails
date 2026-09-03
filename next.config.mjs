@@ -2,11 +2,11 @@
 const nextConfig = {
   images: {
     remotePatterns: [
-      // picsum.photos serve as imagens placeholder (galeria, hero) usadas
-      // enquanto a Von não carrega fotos reais dos seus trabalhos.
+      // Fotos de unhas/manicure (licença Unsplash, uso comercial livre)
+      // usadas na Hero, Galeria e Sobre até a Von carregar fotos próprias.
       {
         protocol: "https",
-        hostname: "picsum.photos",
+        hostname: "images.unsplash.com",
       },
     ],
   },

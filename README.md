@@ -7,10 +7,11 @@ gerir marcações, serviços e disponibilidade.
 ## Stack
 
 - **Next.js 14** (App Router) + **TypeScript**
-- **Tailwind CSS**
+- **Tailwind CSS** + **Framer Motion** (animações e transições)
 - **Supabase** (Postgres, Auth, Row Level Security)
 - **React Hook Form + Zod** (validação client/server)
 - **Resend** (emails transacionais)
+- **Web Push** (notificações push nativas do browser) + **PWA** (instalável no ecrã inicial)
 - Link `wa.me` pré-preenchido para contacto via WhatsApp
 - **Playwright** (testes E2E)
 
@@ -45,6 +46,7 @@ As migrações estão em `supabase/migrations/`, por ordem:
 | `0002_rls_policies.sql` | Ativa Row Level Security e define as políticas de acesso |
 | `0003_seed.sql` | Dados de exemplo (serviços, horário, 1 bloqueio) para o site funcionar de imediato |
 | `0004_availability_function.sql` | Função auxiliar usada pelo wizard público para calcular disponibilidade sem expor dados pessoais de outras clientes |
+| `0005_push_subscriptions.sql` | Tabela de subscrições de notificações push (admin + clientes) |
 
 **Opção A — via Supabase Studio (SQL Editor):** copia e cola o conteúdo de cada ficheiro, por
 ordem, no SQL Editor do teu projeto e executa.
@@ -91,6 +93,8 @@ Ver [`.env.example`](.env.example) para a lista completa e comentada. Resumo:
 | `RESEND_FROM_EMAIL` | Não | Remetente dos emails |
 | `ADMIN_NOTIFICATION_EMAIL` | Não | Email da Von para receber notificações de novas marcações |
 | `NEXT_PUBLIC_SITE_URL` | Sim (produção) | URL pública do site, usada em SEO/sitemap/JSON-LD |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | Não | Notificações push (ver secção 9). Sem elas, o push fica simplesmente desativado |
+| `VAPID_SUBJECT` | Não | Contacto associado às chaves push (`mailto:...`), exigido pela spec Web Push |
 
 *Recomendado em produção para os emails de confirmação funcionarem de facto.
 
@@ -111,8 +115,12 @@ src/
     validations/          Schemas Zod
     availability.ts       Cálculo de slots livres (função pura + integração Supabase)
     email/resend.ts        Templates e envio de email
+    push/                  Subscrição (browser) e envio (servidor) de notificações push
     constants.ts           Dados do negócio (morada, contactos, horário)
+    site-images.ts          Fotos de unhas (Hero, Galeria, Sobre)
   types/database.ts        Tipos TypeScript do schema Supabase
+public/sw.js                Service worker (push + PWA)
+scripts/generate-icons.mjs  Gera favicon/ícones PWA a partir de public/favicon.svg
 supabase/migrations/        Migrações SQL
 e2e/                         Testes Playwright
 ```
@@ -123,9 +131,9 @@ Antes de publicar, a Von deve:
 
 - Editar os dados do negócio em [`src/lib/constants.ts`](src/lib/constants.ts) (morada real,
   telefone, Instagram, `mapEmbedSrc` do Google Maps).
-- Substituir as imagens placeholder (picsum.photos) em
-  [`src/lib/placeholder-images.ts`](src/lib/placeholder-images.ts) por fotos reais dos trabalhos
-  e do espaço.
+- Substituir as fotos de stock (Unsplash) em
+  [`src/lib/site-images.ts`](src/lib/site-images.ts) por fotos reais dos trabalhos do estúdio —
+  atualmente são fotos genéricas de nail art, não trabalhos da Von.
 - Rever/editar os textos de [`/sobre`](src/app/sobre/page.tsx) (história, certificações).
 - Editar/adicionar serviços reais no painel admin (`/admin/servicos`) em vez dos dados de seed.
 - Configurar o horário real em `/admin/disponibilidade`.
@@ -152,7 +160,41 @@ ambiente, apontando para um utilizador de teste.
 4. Confirma que as migrações Supabase (secção 2.2) já foram aplicadas ao projeto Supabase usado
    em produção antes do primeiro acesso.
 
-## 8. Notas de segurança
+## 8. Notificações push
+
+A Von pode ativar notificações push no dashboard admin (botão "Ativar notificações") para ser
+avisada de novas marcações; uma cliente pode ativá-las no ecrã de confirmação da sua marcação
+para saber quando o estado mudar. Sem chaves VAPID configuradas, esta funcionalidade fica só
+desativada — o resto do site continua a funcionar normalmente.
+
+Para ativar:
+
+```bash
+npx web-push generate-vapid-keys
+```
+
+Copia a chave pública para `NEXT_PUBLIC_VAPID_PUBLIC_KEY` e a privada para `VAPID_PRIVATE_KEY`
+(nunca a exponhas ao browser). Funciona só em HTTPS (ou `localhost` em desenvolvimento).
+
+## 9. PWA — instalar no ecrã inicial
+
+O site é instalável como app (manifest + service worker em `public/sw.js`). Um banner de
+instalação aparece automaticamente (Android/Chrome via `beforeinstallprompt`; iOS Safari mostra
+instruções manuais, já que o iOS não suporta esse evento). Os ícones ficam em `public/icon-*.png`
+e `src/app/icon.svg` — para gerar um novo conjunto a partir de `public/favicon.svg`:
+
+```bash
+node scripts/generate-icons.mjs
+```
+
+## 10. Cookies
+
+O site mostra um banner simples de consentimento (`src/components/layout/cookie-consent.tsx`) na
+primeira visita. Atualmente só usa cookies essenciais (sessão do Supabase Auth no admin) — sem
+publicidade nem analytics de terceiros. Se um dia adicionares analytics/marketing, ajusta este
+banner para bloquear esses scripts até haver consentimento explícito.
+
+## 11. Notas de segurança
 
 - RLS está ativo em todas as tabelas. Visitantes anónimos só conseguem **ler** serviços ativos,
   disponibilidade e bloqueios, e **criar** marcações — nunca leem/editam marcações existentes

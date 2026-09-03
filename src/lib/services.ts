@@ -24,6 +24,21 @@ export async function getActiveServices(limit?: number): Promise<Service[]> {
     }
     return data ?? [];
   } catch (error) {
+    // O Next.js usa uma exceção especial (digest "DYNAMIC_SERVER_USAGE")
+    // para marcar internamente uma rota como dinâmica quando deteta o uso
+    // de cookies() durante uma tentativa de pré-renderização estática —
+    // não é um erro real e TEM de continuar a propagar, senão a deteção
+    // de rotas dinâmicas do Next deixa de funcionar corretamente.
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "digest" in error &&
+      typeof (error as { digest?: unknown }).digest === "string" &&
+      (error as { digest: string }).digest.startsWith("DYNAMIC_SERVER_USAGE")
+    ) {
+      throw error;
+    }
+
     console.error("[getActiveServices] Supabase indisponível:", error);
     return [];
   }

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { bookingSchema, type BookingFormValues } from "@/lib/validations/booking.schema";
 import { createBooking, type CreateBookingResult } from "@/app/marcar/actions";
@@ -22,6 +23,12 @@ const STEP_FIELDS: Record<number, (keyof BookingFormValues)[]> = {
 
 const TOTAL_STEPS = 4;
 
+const slideVariants = {
+  enter: (direction: number) => ({ opacity: 0, x: direction > 0 ? 24 : -24 }),
+  center: { opacity: 1, x: 0 },
+  exit: (direction: number) => ({ opacity: 0, x: direction > 0 ? -24 : 24 }),
+};
+
 export default function BookingWizard({
   services,
   initialServiceId,
@@ -29,7 +36,7 @@ export default function BookingWizard({
   services: ServiceOption[];
   initialServiceId?: string;
 }) {
-  const [step, setStep] = useState(1);
+  const [[step, direction], setStepState] = useState<[number, number]>([1, 1]);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [result, setResult] = useState<CreateBookingResult | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -48,15 +55,19 @@ export default function BookingWizard({
     },
   });
 
+  function goToStep(next: number) {
+    setStepState(([current]) => [next, next > current ? 1 : -1]);
+  }
+
   async function goNext() {
     const fields = STEP_FIELDS[step];
     const valid = fields.length === 0 || (await form.trigger(fields));
-    if (valid) setStep((s) => Math.min(s + 1, TOTAL_STEPS));
+    if (valid) goToStep(Math.min(step + 1, TOTAL_STEPS));
   }
 
   function goBack() {
     setSubmitError(null);
-    setStep((s) => Math.max(s - 1, 1));
+    goToStep(Math.max(step - 1, 1));
   }
 
   function onSubmit(values: BookingFormValues) {
@@ -80,17 +91,23 @@ export default function BookingWizard({
       <Progress current={step} />
 
       <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
-        <div className={step === 1 ? "block" : "hidden"} aria-hidden={step !== 1}>
-          <StepServico form={form} services={services} />
-        </div>
-        <div className={step === 2 ? "block" : "hidden"} aria-hidden={step !== 2}>
-          <StepDataHora form={form} />
-        </div>
-        <div className={step === 3 ? "block" : "hidden"} aria-hidden={step !== 3}>
-          <StepDados form={form} />
-        </div>
-        <div className={step === 4 ? "block" : "hidden"} aria-hidden={step !== 4}>
-          <StepConfirmar form={form} services={services} />
+        <div className="relative overflow-hidden">
+          <AnimatePresence mode="wait" custom={direction} initial={false}>
+            <motion.div
+              key={step}
+              custom={direction}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            >
+              {step === 1 && <StepServico form={form} services={services} />}
+              {step === 2 && <StepDataHora form={form} />}
+              {step === 3 && <StepDados form={form} />}
+              {step === 4 && <StepConfirmar form={form} services={services} />}
+            </motion.div>
+          </AnimatePresence>
         </div>
 
         {submitError && (

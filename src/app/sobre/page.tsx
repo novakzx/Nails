@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { ABOUT_IMAGE } from "@/lib/placeholder-images";
+import { ABOUT_IMAGE } from "@/lib/site-images";
 
 export const metadata: Metadata = {
   title: "Sobre",

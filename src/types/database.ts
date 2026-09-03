@@ -58,6 +58,18 @@ export type AppSettings = {
   buffer_minutos: number;
 };
 
+export type PushSubscriptionType = "admin" | "cliente";
+
+export type PushSubscriptionRow = {
+  id: string;
+  tipo: PushSubscriptionType;
+  booking_id: string | null;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  criado_em: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -111,12 +123,35 @@ export type Database = {
         Update: Partial<AppSettings>;
         Relationships: [];
       };
+      push_subscriptions: {
+        Row: PushSubscriptionRow;
+        Insert: Partial<PushSubscriptionRow> & {
+          tipo: PushSubscriptionType;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+        };
+        Update: Partial<PushSubscriptionRow>;
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
       get_booked_intervals: {
         Args: { p_data: string };
         Returns: { hora_inicio: string; hora_fim: string }[];
+      };
+      get_admin_push_subscriptions: {
+        Args: Record<string, never>;
+        Returns: { endpoint: string; p256dh: string; auth: string }[];
       };
     };
   };

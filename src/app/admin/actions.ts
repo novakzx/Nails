@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { sendClientStatusUpdateEmail } from "@/lib/email/resend";
+import { notifyBookingClient } from "@/lib/push/send";
 import type { BookingStatus } from "@/types/database";
 import {
   serviceSchema,
@@ -73,17 +74,31 @@ export async function updateBookingStatus(bookingId: string, estado: BookingStat
     .eq("id", booking.service_id)
     .single();
 
-  await sendClientStatusUpdateEmail(
-    {
-      nomeCliente: booking.nome_cliente,
-      emailCliente: booking.email_cliente,
-      telefoneCliente: booking.telefone_cliente,
-      servicoNome: service?.nome ?? "Serviço",
-      data: booking.data,
-      horaInicio: booking.hora_inicio.slice(0, 5),
-    },
-    estado
-  );
+  const STATUS_MESSAGES: Record<BookingStatus, string> = {
+    pendente: "A tua marcação está pendente de confirmação.",
+    confirmada: "A tua marcação foi confirmada! Contamos contigo.",
+    cancelada: "A tua marcação foi cancelada.",
+    concluida: "Obrigada pela tua visita — esperamos que tenhas adorado!",
+  };
+
+  await Promise.allSettled([
+    sendClientStatusUpdateEmail(
+      {
+        nomeCliente: booking.nome_cliente,
+        emailCliente: booking.email_cliente,
+        telefoneCliente: booking.telefone_cliente,
+        servicoNome: service?.nome ?? "Serviço",
+        data: booking.data,
+        horaInicio: booking.hora_inicio.slice(0, 5),
+      },
+      estado
+    ),
+    notifyBookingClient(bookingId, {
+      title: "Nails Von",
+      body: STATUS_MESSAGES[estado],
+      url: "/",
+    }),
+  ]);
 
   revalidatePath("/admin");
   revalidatePath("/admin/marcacoes");
@@ -264,5 +279,31 @@ export async function updateBufferMinutos(id: string, bufferMinutos: number) {
     .eq("id", id);
   revalidatePath("/admin/disponibilidade");
   if (error) return { error: "Não foi possível atualizar o intervalo entre marcações." };
+  return { success: true };
+}
+
+// ---------------------------------------------------------------------------
+// Notificações push (admin)
+// ---------------------------------------------------------------------------
+export async function subscribeAdminPush(subscription: PushSubscriptionJSON) {
+  if (!subscription.endpoint || !subscription.keys?.p256dh || !subscription.keys?.auth) {
+    return { error: "Subscrição inválida." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("push_subscriptions").upsert(
+    {
+      tipo: "admin",
+      endpoint: subscription.endpoint,
+      p256dh: subscription.keys.p256dh,
+      auth: subscription.keys.auth,
+    },
+    { onConflict: "endpoint" }
+  );
+
+  if (error) {
+    console.error("[subscribeAdminPush]", error);
+    return { error: "Não foi possível ativar as notificações." };
+  }
   return { success: true };
 }

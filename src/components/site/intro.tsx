@@ -1,4 +1,5 @@
 import { MapPin, Sparkles, HeartHandshake } from "lucide-react";
+import { Reveal, RevealGroup, RevealItem } from "@/components/motion/reveal";
 
 const POINTS = [
   {
@@ -20,27 +21,27 @@ const POINTS = [
 
 export default function Intro() {
   return (
-    <section className="container-site py-16 sm:py-20">
-      <div className="mx-auto max-w-2xl text-center">
+    <section className="container-site py-14 sm:py-20">
+      <Reveal className="mx-auto max-w-2xl text-center">
         <h2 className="heading-display text-3xl sm:text-4xl">O estúdio Nails Von</h2>
         <p className="mt-4 text-charcoal-500">
           Um espaço dedicado à nail design em Almada, onde a técnica encontra o detalhe artístico.
           Trabalhamos manicure, pedicure e nail art à medida de cada cliente, num ambiente calmo e
           acolhedor.
         </p>
-      </div>
+      </Reveal>
 
-      <div className="mt-12 grid gap-6 sm:grid-cols-3">
+      <RevealGroup className="mt-10 grid gap-5 sm:mt-12 sm:grid-cols-3 sm:gap-6">
         {POINTS.map(({ icon: Icon, title, text }) => (
-          <div key={title} className="card p-6 text-center">
+          <RevealItem key={title} className="card p-6 text-center transition-transform duration-300 hover:-translate-y-1.5 hover:shadow-soft_lg">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-100">
               <Icon className="h-6 w-6 text-rose-500" aria-hidden="true" />
             </div>
             <h3 className="mt-4 font-serif text-lg font-semibold text-charcoal-900">{title}</h3>
             <p className="mt-2 text-sm text-charcoal-500">{text}</p>
-          </div>
+          </RevealItem>
         ))}
-      </div>
+      </RevealGroup>
     </section>
   );
 }

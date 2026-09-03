@@ -4,12 +4,14 @@ import { createClient } from "@/lib/supabase/server";
 import { bookingSchema, type BookingFormValues } from "@/lib/validations/booking.schema";
 import { getFreeSlotsForDate, timeToMinutes, minutesToTime } from "@/lib/availability";
 import { sendAdminNewBookingEmail, sendClientBookingReceivedEmail } from "@/lib/email/resend";
+import { notifyAdmins } from "@/lib/push/send";
 import { buildWhatsappLink } from "@/lib/constants";
 
 export interface CreateBookingResult {
   success: boolean;
   error?: string;
   whatsappLink?: string;
+  bookingId?: string;
   resumo?: {
     servicoNome: string;
     data: string;
@@ -57,7 +59,14 @@ export async function createBooking(input: BookingFormValues): Promise<CreateBoo
 
   const horaFim = minutesToTime(timeToMinutes(horaInicio) + service.duracao_minutos);
 
+  // Geramos o id no servidor (em vez de pedir de volta com .select() após o
+  // insert): "anon" não tem policy de SELECT em bookings — sem essa
+  // policy, um INSERT ... RETURNING não devolveria a linha — por isso
+  // fornecemos já o id, que a coluna aceita em vez do seu default.
+  const bookingId = crypto.randomUUID();
+
   const { error: insertError } = await supabase.from("bookings").insert({
+    id: bookingId,
     service_id: serviceId,
     nome_cliente: nomeCliente,
     telefone_cliente: telefoneCliente,
@@ -91,10 +100,15 @@ export async function createBooking(input: BookingFormValues): Promise<CreateBoo
     notas: notas || undefined,
   };
 
-  // Falhas de email não devem impedir a confirmação da marcação em si.
+  // Falhas de email/push não devem impedir a confirmação da marcação em si.
   await Promise.allSettled([
     sendClientBookingReceivedEmail(emailData),
     sendAdminNewBookingEmail(emailData),
+    notifyAdmins({
+      title: "Nova marcação pendente",
+      body: `${nomeCliente} — ${service.nome} em ${data} às ${horaInicio}`,
+      url: "/admin/marcacoes",
+    }),
   ]);
 
   const whatsappMessage = `Olá! Acabei de marcar "${service.nome}" para o dia ${data} às ${horaInicio}. Fico a aguardar confirmação. (${nomeCliente})`;
@@ -102,6 +116,29 @@ export async function createBooking(input: BookingFormValues): Promise<CreateBoo
   return {
     success: true,
     whatsappLink: buildWhatsappLink(whatsappMessage),
+    bookingId,
     resumo: { servicoNome: service.nome, data, horaInicio, horaFim },
   };
+}
+
+/** Guarda a subscrição push da cliente, associada à marcação que acabou de criar. */
+export async function subscribeClientPush(bookingId: string, subscription: PushSubscriptionJSON) {
+  if (!subscription.endpoint || !subscription.keys?.p256dh || !subscription.keys?.auth) {
+    return { error: "Subscrição inválida." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("push_subscriptions").insert({
+    tipo: "cliente",
+    booking_id: bookingId,
+    endpoint: subscription.endpoint,
+    p256dh: subscription.keys.p256dh,
+    auth: subscription.keys.auth,
+  });
+
+  if (error) {
+    console.error("[subscribeClientPush]", error);
+    return { error: "Não foi possível ativar as notificações." };
+  }
+  return { success: true };
 }

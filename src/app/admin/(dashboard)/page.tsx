@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getServiceNamesMap } from "@/lib/services-map";
 import StatusBadge from "@/components/admin/status-badge";
 import BookingActions from "@/components/admin/booking-actions";
+import PushSubscribeButton from "@/components/push/push-subscribe-button";
+import { subscribeAdminPush } from "@/app/admin/actions";
 
 function toIsoDate(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -40,8 +42,17 @@ export default async function AdminDashboardPage() {
 
   return (
     <div>
-      <h1 className="heading-display text-3xl">Dashboard</h1>
-      <p className="mt-1 text-charcoal-500">Resumo das marcações de hoje.</p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="heading-display text-3xl">Dashboard</h1>
+          <p className="mt-1 text-charcoal-500">Resumo das marcações de hoje.</p>
+        </div>
+        <PushSubscribeButton
+          label="Ativar notificações"
+          activeLabel="Notificações ativas"
+          onSubscribe={subscribeAdminPush}
+        />
+      </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         {stats.map((s) => (

@@ -1,7 +1,11 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
+import CookieConsent from "@/components/layout/cookie-consent";
+import InstallPrompt from "@/components/layout/install-prompt";
+import MobileFab from "@/components/layout/mobile-fab";
+import SwRegister from "@/components/sw-register";
 import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 
@@ -57,6 +61,17 @@ export const metadata: Metadata = {
       "Estúdio de nail design em Almada. Manicure, pedicure e nail art. Marque já o seu horário online.",
   },
   robots: { index: true, follow: true },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Nails Von",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#A6573F",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -114,11 +129,15 @@ export default function RootLayout({
         >
           Saltar para o conteúdo principal
         </a>
+        <SwRegister />
         <Navbar />
         <main id="conteudo-principal" className="flex-1">
           {children}
         </main>
         <Footer />
+        <MobileFab />
+        <CookieConsent />
+        <InstallPrompt />
       </body>
     </html>
   );
