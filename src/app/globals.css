@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #fbf7f4;
+  --foreground: #2a211d;
+}
+
+* {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Foco visível e consistente para navegação por teclado (acessibilidade) */
+:focus-visible {
+  outline: 2px solid #a6573f;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@layer components {
+  .container-site {
+    @apply mx-auto w-full max-w-6xl px-5 sm:px-8;
+  }
+
+  .heading-display {
+    @apply font-serif text-charcoal-900;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-rose-500 px-6 py-3.5
+      text-sm font-semibold text-white shadow-soft transition-all duration-200
+      hover:bg-rose-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border-2 border-rose-500 bg-transparent px-6 py-3
+      text-sm font-semibold text-rose-500 transition-all duration-200
+      hover:bg-rose-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .card {
+    @apply rounded-xl2 border border-sand-300 bg-white/70 shadow-soft backdrop-blur-sm;
+  }
+
+  .input-field {
+    @apply w-full rounded-lg border border-sand-300 bg-white px-4 py-3 text-sm text-charcoal-900
+      placeholder:text-charcoal-300 transition-colors focus:border-rose-500 focus:outline-none
+      focus:ring-2 focus:ring-rose-200;
+  }
+
+  .label-field {
+    @apply mb-1.5 block text-sm font-medium text-charcoal-700;
+  }
+
+  .error-text {
+    @apply mt-1.5 text-sm text-red-600;
+  }
+}
